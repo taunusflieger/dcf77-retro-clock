@@ -164,6 +164,7 @@ mod app {
         rprintln!("idle");
         loop {}
     }
+
     /*
         extern "C" {
             fn UART4();
