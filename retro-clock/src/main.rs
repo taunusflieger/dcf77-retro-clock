@@ -83,12 +83,12 @@ mod app {
         let clocks = setup_clocks(device.RCC);
         let mut syscfg = device.SYSCFG.constrain();
         let mut exti = device.EXTI;
-        let mut pwr = device.PWR;
+        //let mut pwr = device.PWR;
 
-        let gpiob = device.GPIOB.split();
-        let scl = gpiob.pb6.into_alternate().set_open_drain();
-        let sda = gpiob.pb7.into_alternate().set_open_drain();
-        let i2c = I2c::new(device.I2C1, (scl, sda), 400.khz(), clocks);
+        //let gpiob = device.GPIOB.split();
+        //let scl = gpiob.pb6.into_alternate().set_open_drain();
+        //let sda = gpiob.pb7.into_alternate().set_open_drain();
+        //let i2c = I2c::new(device.I2C1, (scl, sda), 400.khz(), clocks);
 
         // Configure input pin for DCF77 signal as interrup source
         let gpioa = device.GPIOA.split();
@@ -100,10 +100,6 @@ mod app {
         // Use this pin for debugging decoded signal state with oscilloscope
         let gpioc = device.GPIOC.split();
         let output_pin = gpioc.pc6.into_push_pull_output().erase_number();
-        // let pin = gpioa.pa6.into_floating_input().downgrade();
-        //pa6.make_interrupt_source(&mut syscfg);
-        //pa6.trigger_on_edge(&mut exti, Edge::RISING_FALLING);
-        //pa6.enable_interrupt(&mut exti);
 
         // Schedule the blinking task
         // cx.schedule.blink(cx.start + CYCLE_HZ.cycles()).unwrap();
@@ -127,13 +123,11 @@ mod app {
     }
 
     #[task(binds = EXTI9_5, priority=2, local=[dcf_pin, debug_pin])]
-    fn exti9_5(cx: exti9_5::Context) {
-        let dcf_pin = cx.local.dcf_pin;
+    fn dcf77_signal_change(cx: dcf77_signal_change::Context) {
         let debug_pin = cx.local.debug_pin;
 
-        let dcf_interrupted = dcf_pin.check_interrupt();
-        dcf_pin.clear_interrupt_pending_bit();
-        if !dcf_interrupted {
+        cx.local.dcf_pin.clear_interrupt_pending_bit();
+        if !cx.local.dcf_pin.check_interrupt() {
             return;
         }
 
@@ -149,25 +143,4 @@ mod app {
               }
         */
     }
-    /*
-        // NOTE This is a dummy task which is not called. It is required as a schedule target
-        // to allow to start the time of the system
-        #[task( schedule = [dummy_schedule])]
-        fn dummy_schedule(_cx: dummy_schedule::Context) {
-            // cx.resources.led.toggle().unwrap();
-            // cx.schedule.blink(cx.scheduled + CYCLE_HZ.cycles()).unwrap();
-        }
-    */
-    #[allow(clippy::empty_loop)]
-    #[idle()]
-    fn idle(_cx: idle::Context) -> ! {
-        rprintln!("idle");
-        loop {}
-    }
-
-    /*
-        extern "C" {
-            fn UART4();
-        }
-    */
 }
