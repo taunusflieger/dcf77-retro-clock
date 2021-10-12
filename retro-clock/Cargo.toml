@@ -1,0 +1,47 @@
+[workspace]
+members = [
+]
+
+
+[package]
+authors = ["Michael Zill <michael.zill@gmail.com>"]
+name = "retro-clock"
+edition = "2018"
+version = "0.1.0"
+
+[dependencies]
+embedded-hal = "0.2"
+nb = "1"
+stm32f4 = "0.14.0"
+#cortex-m = "0.7"
+#cortex-m-rt = { version = "0.7" , feature = [ "device" ]}
+cortex-m-rtic = { version = "0.6.0-rc.2" }
+stm32f4xx-hal = { version = "0.10.0", features = ["stm32f405", "rt", "usb_fs",
+                                "sdio", "sdio-host"] }
+heapless = "0.7.5"
+panic-rtt-target = {version="0.1.2", features = ["cortex-m"] }
+rtt-target = {version= "0.3.1",  features = ["cortex-m"] }
+chrono = {version = "0.4.19", default-features=false}
+rtcc = "0.2.1"
+
+[dev-dependencies]
+usb-device = "0.2"
+usbd-serial = "0.1"
+rtt-target = { version = "0.3", features = ["cortex-m"] }
+panic-rtt-target = { version = "0.1", features = ["cortex-m"] }
+usbd_scsi = "0.1"
+usbd_mass_storage = "0.1"
+
+[profile.dev]
+debug=true
+opt-level=0
+
+[patch.crates-io]
+#cortex-m-rtic = { path = "../../cortex-m-rtic" }
+#feather-f405 = { path = "../../feather-f405" }
+#stm32f4xx-hal = { path = '../../stm32f4xx-hal', vfeatures = ["rt", "stm32f405", "usb_fs", "sdio", "sdio-host"] }
+stm32f4xx-hal = { git = 'https://github.com/stm32-rs/stm32f4xx-hal.git', vfeatures = ["rt", "stm32f405", "usb_fs", "sdio", "sdio-host"] }
+
+[profile.dev.package."*"]
+opt-level=0
+debug = true # symbols are nice and they don't increase the size on Flash
