@@ -11,9 +11,27 @@ extern crate heapless;
 use panic_rtt_target as _;
 use rtic::app;
 
-//use time_display::display_error;
+const U32_MAX: u32 = 4_294_967_295u32;
 
-const DISP_I2C_ADDR: u8 = 0x70;
+macro_rules! op_cyccnt_diff {
+    ( $( $x:expr )* ) => {
+        {
+            let before = DWT::get_cycle_count();
+            $(
+                let res = $x;
+            )*
+            let after = DWT::get_cycle_count();
+            let diff =
+                if after >= before {
+                    after - before
+                } else {
+                    after + (U32_MAX - before)
+                };
+            (res, diff)
+        }
+    };
+}
+
 #[app(device = stm32f4xx_hal::pac, peripherals = true)]
 mod app {
 
@@ -124,6 +142,7 @@ mod app {
 
     #[task(binds = EXTI9_5, priority=2, local=[dcf_pin, debug_pin])]
     fn dcf77_signal_change(cx: dcf77_signal_change::Context) {
+        let now = DWT::get_cycle_count();
         let debug_pin = cx.local.debug_pin;
 
         cx.local.dcf_pin.clear_interrupt_pending_bit();
@@ -131,16 +150,16 @@ mod app {
             return;
         }
 
-        //let now = Instant::now();
-
+        let now = DWT::get_cycle_count();
         /*
-              let res = cx
-                  .resources
-                  .decoder
-                  .register_transition(dcf_pin.is_high(), now, debug_pin);
-              if let Err(e) = res {
-                  rprintln!("Err: {:?}", e);
-              }
+                let res = cx
+                    .local
+                    .decoder
+                    .register_transition(dcf_pin.is_high(), now, debug_pin);
+
+                if let Err(e) = res {
+                    rprintln!("Err: {:?}", e);
+                }
         */
     }
 }
