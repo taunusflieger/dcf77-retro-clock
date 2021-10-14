@@ -3,7 +3,8 @@ name = "dcf77_decoder"
 version = "0.1.0"
 authors = [
     "Cristian Eigel <cristian.eigel@esrlabs.com>",
-    "Michael Zill <michael.zill@gmail.com>",
+    "Oliver Mueller <oliver.mueller@esrlabs.com>",
+    "Michael Zill <michael.zill@gesrlabs.com>",
 ]
 edition = "2018"
 description = "DCF 77 Decoder"

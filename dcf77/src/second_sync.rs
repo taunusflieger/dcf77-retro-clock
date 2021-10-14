@@ -11,8 +11,11 @@
 //
 //
 use crate::cycles_computer::CyclesComputer;
-//use ringbuffer::RingBuffer;
+use ringbuffer::RingBuffer;
 //use rtt_target::rprintln;
+
+const BUFFER_SIZE: usize = 300;
+const SIGNAL_SEARCH_WINDOW_LEN: u32 = 10;
 
 pub enum Edge {
     Falling,
@@ -20,35 +23,57 @@ pub enum Edge {
 }
 
 pub struct SecondSync {
-    timestamps_edge_down: [u32; 300],
-    timestamps_edge_up: [u32; 300],
-    edge_down_idx: usize,
-    edge_up_idx: usize,
-    cycles_computer: CyclesComputer,
+    timestamps_edge_down: RingBuffer<BUFFER_SIZE>,
+    timestamps_edge_up: RingBuffer<BUFFER_SIZE>,
+    cycles_per_1000ms: u32,
+    signal_search_window_ms: u32,
 }
 
 impl SecondSync {
     pub fn new(cycles_computer: CyclesComputer) -> Self {
         SecondSync {
-            timestamps_edge_down: [0; 300],
-            timestamps_edge_up: [0; 300],
-            edge_down_idx: 0,
-            edge_up_idx: 0,
-            cycles_computer,
+            timestamps_edge_down: RingBuffer::new(),
+            timestamps_edge_up: RingBuffer::new(),
+            cycles_per_1000ms: cycles_computer.from_cycles(1000),
+            signal_search_window_ms: cycles_computer.from_cycles(SIGNAL_SEARCH_WINDOW_LEN),
         }
     }
 
-    pub fn register_transition(&mut self, signal: Edge, now: u32) {
+    pub fn register_transition(&mut self, signal: Edge, now: u32) -> bool {
         match signal {
             Edge::Falling => {
-                self.timestamps_edge_down[self.edge_down_idx] =
-                    self.cycles_computer.from_cycles(now);
+                self.timestamps_edge_down.push(now);
             }
             Edge::Rising => {
-                self.timestamps_edge_up[self.edge_up_idx] = self.cycles_computer.from_cycles(now);
+                self.timestamps_edge_up.push(now);
             }
         }
+        self.check_second_sync()
     }
+
+    // NOTE Current implementation does not handle overflow of CYCCT
+    fn check_second_sync(&mut self) -> bool {
+        let mut first_second_mark = 0;
+        let mut second_second_mark = 0;
+        // let mut third_second_mark = 0;
+        for i in 0..BUFFER_SIZE - 1 {
+            for j in (i + 1)..BUFFER_SIZE - 1 {
+                let d = self.timestamps_edge_down[j] - self.timestamps_edge_up[i];
+                if d > (self.cycles_per_1000ms - self.signal_search_window_ms / 2)
+                    && d < (self.cycles_per_1000ms + self.signal_search_window_ms / 2)
+                {
+                    first_second_mark = self.timestamps_edge_down[i];
+                    second_second_mark = self.timestamps_edge_down[j];
+                }
+            }
+        }
+        if first_second_mark > 0 && second_second_mark > 0 {
+            true
+        } else {
+            false
+        }
+    }
+
     /*
         pub fn start_1ms_timer(tim1: pac::TIM1, clocks: &Clocks) -> pac::TIM1 {
             // pause
