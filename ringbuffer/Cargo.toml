@@ -1,0 +1,18 @@
+[package]
+name = "ringbuffer"
+version = "0.1.0"
+authors = [
+    "Michael Zill <michael.zill@gmail.com>",
+]
+edition = "2018"
+description = "Simple ringbuffer for DCF77 signal detection"
+documentation = ""
+repository = ""
+keywords = ["dcf77", "ringbuffer"]
+categories = []
+readme = "README.md"
+license = "0BSD"
+
+[dependencies]
+
+[dev-dependencies]

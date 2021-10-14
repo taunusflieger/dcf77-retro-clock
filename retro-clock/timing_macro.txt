@@ -1,0 +1,52 @@
+#![no_std]
+#![no_main]
+
+use panic_halt as _;
+use cortex_m::peripheral::{Peripherals, DWT};
+use cortex_m_rt::entry;
+use cortex_m_semihosting::hprintln;
+use core::f32::consts::PI;
+
+use trig_lib::{sin, cos, atan2};
+
+const U32_MAX: u32 = 4_294_967_295u32;
+
+macro_rules! op_cyccnt_diff {
+    ( $( $x:expr )* ) => {
+        {
+            let before = DWT::get_cycle_count();
+            $(
+                let res = $x;
+            )*
+            let after = DWT::get_cycle_count();
+            let diff =
+                if after >= before {
+                    after - before
+                } else {
+                    after + (U32_MAX - before)
+                };
+            (res, diff)
+        }
+    };
+}
+
+#[entry]
+fn main() -> ! {
+    let mut peripherals = Peripherals::take().unwrap();
+    peripherals.DWT.enable_cycle_counter();
+    let mut theta: f32 = 0.;
+    let dtheta: f32 = 2. * PI / 10.6;
+
+    loop {
+        let (res, diff) = op_cyccnt_diff!(sin(theta));
+        // test 1
+        hprintln!("  sin({:.6})={:.6}: {}", theta, res, diff).unwrap();
+        // test 2
+        // hprintln!("  sin={:.6}: {}", res, diff).unwrap();
+
+        theta += dtheta;
+        if theta > 2. * PI {
+            theta -= 2. * PI;
+        }
+    }
+}

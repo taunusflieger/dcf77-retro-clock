@@ -1,5 +1,5 @@
 #![deny(unsafe_code)]
-//#![deny(warnings)]
+#![deny(warnings)]
 #![no_std]
 #![no_main]
 
@@ -7,12 +7,11 @@ extern crate heapless;
 
 //use crate::stm32f4xx_hal::i2c::I2c;
 // use datetime_converter::DCF77DateTimeConverter;
-//use dcf77_decoder::DCF77Decoder;
 use panic_rtt_target as _;
 use rtic::app;
 
-const U32_MAX: u32 = 4_294_967_295u32;
-
+//const U32_MAX: u32 = 4_294_967_295u32;
+/*
 macro_rules! op_cyccnt_diff {
     ( $( $x:expr )* ) => {
         {
@@ -31,17 +30,18 @@ macro_rules! op_cyccnt_diff {
         }
     };
 }
+*/
 
 #[app(device = stm32f4xx_hal::pac, peripherals = true)]
 mod app {
 
+    use dcf77_decoder::{CyclesComputer, DCF77Decoder};
     use rtt_target::{rprintln, rtt_init_print};
-    use stm32f4xx_hal::gpio::{gpioa, gpioc, Edge, Input, Output, PullUp, PushPull, AF4};
-
     use stm32f4xx_hal::gpio::ExtiPin;
     use stm32f4xx_hal::gpio::GpioExt;
-    use stm32f4xx_hal::gpio::PinExt;
-    use stm32f4xx_hal::i2c::I2c;
+    use stm32f4xx_hal::gpio::{gpioa, gpioc, Edge, Input, Output, PullUp, PushPull};
+    //    use stm32f4xx_hal::gpio::PinExt;
+    //    use stm32f4xx_hal::i2c::I2c;
     use stm32f4xx_hal::pac;
     use stm32f4xx_hal::pac::DWT;
     use stm32f4xx_hal::prelude::_stm32f4xx_hal_syscfg_SysCfgExt;
@@ -50,7 +50,6 @@ mod app {
 
     #[shared]
     struct Shared {
-        val: u16,
         #[lock_free]
         synchronized: bool,
     }
@@ -59,6 +58,7 @@ mod app {
     struct Local {
         dcf_pin: gpioa::PAn<Input<PullUp>>,
         debug_pin: gpioc::PCn<Output<PushPull>>,
+        decoder: DCF77Decoder,
     }
 
     /// Helper for setting up the clocks on the board
@@ -124,42 +124,42 @@ mod app {
 
         //let mut timer = Timer::new(device.TIM2, &clocks).start_count_down(100.hz());
         //timer.listen(Event::TimeOut);
-        // let rtc = Rtc::new(device.RTC, 255, 127, false, &mut pwr);
+        //let rtc = Rtc::new(device.RTC, 255, 127, false, &mut pwr);
+        let cc = CyclesComputer::new(clocks.sysclk());
+
         rprintln!("Init successful");
 
         (
             Shared {
-                val: 0,
                 synchronized: false,
             },
             Local {
                 dcf_pin: pin,
                 debug_pin: output_pin,
+                decoder: DCF77Decoder::new(cc),
             },
             init::Monotonics(),
         )
     }
 
-    #[task(binds = EXTI9_5, priority=2, local=[dcf_pin, debug_pin])]
+    #[task(binds = EXTI9_5, priority=2, local=[dcf_pin, debug_pin, decoder], shared = [synchronized])]
     fn dcf77_signal_change(cx: dcf77_signal_change::Context) {
         let now = DWT::get_cycle_count();
-        let debug_pin = cx.local.debug_pin;
 
-        cx.local.dcf_pin.clear_interrupt_pending_bit();
         if !cx.local.dcf_pin.check_interrupt() {
             return;
         }
 
-        let now = DWT::get_cycle_count();
-        /*
-                let res = cx
-                    .local
-                    .decoder
-                    .register_transition(dcf_pin.is_high(), now, debug_pin);
+        if cx.local.dcf_pin.is_high() {
+            cx.local.debug_pin.set_high();
+        } else {
+            cx.local.debug_pin.set_low();
+        }
 
-                if let Err(e) = res {
-                    rprintln!("Err: {:?}", e);
-                }
-        */
+        cx.local.dcf_pin.clear_interrupt_pending_bit();
+        *cx.shared.synchronized = cx
+            .local
+            .decoder
+            .register_transition(cx.local.dcf_pin.is_high(), now);
     }
 }

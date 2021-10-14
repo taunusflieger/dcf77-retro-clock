@@ -1,24 +1,29 @@
 [package]
-authors = ["Michael Zill <michael.zill@gmail.com>"]
-name = "retro-clock"
-edition = "2018"
+name = "dcf77_decoder"
 version = "0.1.0"
+authors = [
+    "Cristian Eigel <cristian.eigel@esrlabs.com>",
+    "Michael Zill <michael.zill@gmail.com>",
+]
+edition = "2018"
+description = "DCF 77 Decoder"
+documentation = ""
+repository = ""
+keywords = ["dcf77", "decoder"]
+categories = ["no-std", "embedded"]
+readme = "README.md"
+license = "0BSD"
 
 [dependencies]
-embedded-hal = "0.2"
-nb = "1"
-stm32f4 = "0.14.0"
-cortex-m = "0.7"
-cortex-m-rt = { version = "0.7" , feature = [ "device" ]}
-cortex-m-rtic = { version = "0.6.0-rc.2" }
-stm32f4xx-hal = { version = "0.10.0", features = ["stm32f405", "rt", "usb_fs",
+stm32f4xx-hal = { version = "0.10", features = ["rt", "stm32f405", "usb_fs",
                                 "sdio", "sdio-host"] }
+ringbuffer = {path = "../ringbuffer"}
 heapless = "0.7.5"
 panic-rtt-target = {version="0.1.2", features = ["cortex-m"] }
 rtt-target = {version= "0.3.1",  features = ["cortex-m"] }
 chrono = {version = "0.4.19", default-features=false}
 rtcc = "0.2.1"
-dcf77_decoder = {path = "../dcf77"}
+
 
 [dev-dependencies]
 usb-device = "0.2"

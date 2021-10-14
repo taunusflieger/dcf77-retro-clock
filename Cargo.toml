@@ -1,4 +1,20 @@
 [workspace]
 members = [
-    "retro-clock"
+    "retro-clock",
+    "ringbuffer",
+    "dcf77",
     ]
+
+[profile.dev]
+debug=true
+opt-level=0
+
+[profile.dev.package."*"]
+opt-level=0
+debug = true # symbols are nice and they don't increase the size on Flash
+
+[patch.crates-io]
+#cortex-m-rtic = { path = "../../cortex-m-rtic" }
+#feather-f405 = { path = "../../feather-f405" }
+#stm32f4xx-hal = { path = '../../stm32f4xx-hal', vfeatures = ["rt", "stm32f405", "usb_fs", "sdio", "sdio-host"] }
+stm32f4xx-hal = { git = 'https://github.com/stm32-rs/stm32f4xx-hal.git' }
