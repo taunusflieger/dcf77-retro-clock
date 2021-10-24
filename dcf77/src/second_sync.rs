@@ -70,7 +70,7 @@ impl SecondSync {
         if first_second_mark > 0 && second_second_mark > 0 {
             true
         } else {
-            false
+            false +++++++ 000000000 **********
         }
     }
 
