@@ -13,15 +13,20 @@ jobs:
   linux_arm7:
     name: Linux ARMv7
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
     steps:
       - uses: actions/checkout@v2
+      - name: Install Rust ${{ matrix.toolchain }}
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
-          target: armv7-unknown-linux-gnueabihf
+          toolchain: ${{ matrix.toolchain }}
+          target: thumbv7em-none-eabihf
           override: true
-      - uses: actions-rs/cargo@v1
+      - name: cargo build release
+        uses: actions-rs/cargo@v1
         with:
-          use-cross: true
           command: build
-          args: --target thumbv7em-none-eabihf
+          args: --release
