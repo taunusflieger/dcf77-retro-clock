@@ -30,7 +30,7 @@ jobs:
         with:
           command: build
           args: --release
-      - name: Create Issue Action 
+      - name: Create Issue Action if failed
         uses: nashmaniac/create-issue-action@v1.1
         if: failure() 
         with:
@@ -38,4 +38,5 @@ jobs:
           token: ${{secrets.GITHUB_TOKEN}}
           assignees: ${{github.actor}}
           labels: worflow-failed
-          body: Workflow failed for commit ${{github.sha}}
+          body: Workflow failed for commit ${{github.sha}} [see details](${{github.server_url}}/${{github.repository}}/runs/${{github.run_id}}?check_suite_focus=true)
+
